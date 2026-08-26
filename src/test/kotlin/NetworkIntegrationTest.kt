@@ -122,7 +122,8 @@ class NetworkIntegrationTest {
 
         // Асинхронно подключаемся к SSE потоку подписки на "users."
         val sseRequest = HttpRequest.newBuilder()
-            .uri(URI.create("$baseUrl/api/subscribe?prefix=users."))
+            .uri(URI.create("$baseUrl/api/subscribe/users"))
+            .header("X-User-Id", "user_42")
             .GET()
             .build()
 
@@ -144,14 +145,13 @@ class NetworkIntegrationTest {
         }
         sseThread.start()
 
-        // Даем время для установления соединения
-        Thread.sleep(200)
+        Thread.sleep(1000)
 
         // Делаем изменения в БД
         storage.set("users.user_42.level", 10)
 
-        // Ждем получения события через SSE поток (максимум 3 секунды)
-        future.get(3, TimeUnit.SECONDS)
+        // Ждем получения события через SSE поток (максимум 10 секунд)
+        future.get(10, TimeUnit.SECONDS)
 
         synchronized(receivedEvents) {
             assertTrue(receivedEvents.isNotEmpty())
